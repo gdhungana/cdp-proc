@@ -22,3 +22,15 @@ def connect_sqlserver(server,dbname,uid=None,pwd=None,port=1433,driver='/usr/loc
     cursor=cnxn.cursor()
     return cursor
 
+def load_data(cursor,sqlquery):
+    """
+    cursor: pyodbc.cursor object
+    sqlquery: sql query string
+    returns pandas dataframe from the sqlquery. 
+    Use only for small databases if running from stanalone node-- to make efficient 
+    need distributed architecture for larger databases 
+    """
+    data=pd.read_sql(sqlquery,cursor.connection)
+    return data
+
+
