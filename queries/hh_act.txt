@@ -1,0 +1,9 @@
+#- exploring the statewise distn for households
+select q2.st as ST,count(distinct q2.householdid) as hh_freq from (select q1.* from (select householdid,replace(State,'[^\W ]','') as st from HouseHold)q1 where q1.st not like '%[0-9]%' and st IN ('AL','AK','AZ','AR','CA','CO','CT','DC','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'))q2 group by q2.st;
+
+
+#- Statewise distn to the household inner joined with the activity db
+select q2.st as ST, count(distinct q2.householdId) as hh_freq, count(distinct q2.orgid) as org_freq from (select act.orgid,act.householdid,hh.st from (select orgid, householdid from activity where transactionamount is not NULL and transactionamount!='')act inner join (select q1.* from (select householdid,replace(State,'[^\W ]','') as st from HouseHold)q1 where q1.st not like '%[0-9]%' and q1.st IN ('AL','AK','AZ','AR','CA','CO','CT','DC','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'))hh on act.householdid=hh.householdid)q2 group by q2.st;
+
+
+
