@@ -20,10 +20,10 @@ def connect_sqlserver(server,dbname,uid=None,pwd=None,port=1433,driver='/usr/loc
             sys.exit(0)
         else:  
             cnxn=pyodbc.connect(driver=driver,server=server,database=dbname,uid=uid,pwd=pwd,port=port)
-    cursor=cnxn.cursor()
-    return cursor
+    #cursor=cnxn.cursor()
+    return cnxn
 
-def load_data(cursor,sqlquery):
+def load_data(cnxn,sqlquery):
     """
     cursor: pyodbc.cursor object
     sqlquery: sql query string
@@ -31,8 +31,28 @@ def load_data(cursor,sqlquery):
     Use only for small databases if running from stanalone node-- to make efficient 
     need distributed architecture for larger databases 
     """
+    cursor=cnxn.cursor()
     data=pd.read_sql(sqlquery,cursor.connection)
     return data
+"""
+def write_data_rowwise(cnxn,df):
+    cursor=cnxn.cursor()
+    for index, row in df.iterrows():
+        print(row)
+        cursor.execute....
+"""
+
+def write_data_table(df,server,dbname,outtable,uid,pwd,port=1433,driver='/usr/local/lib/libmsodbcsql.17.dylib'): 
+    from sqlalchemy import create_engine, event
+    from urllib.parse import quote_plus
+    conn ="DRIVER="+driver+";SERVER="+server+";DATABASE="+dbname+";UID="+uid+";PWD="+pwd
+    quoted = quote_plus(conn)
+    new_con='mssql+pyodbc:///?odbc_connect={}'.format(quoted)
+    engine=sqlalchemy.create_engine(new_con)
+    print("writing table to the db")
+    df.to_sql(outtable,con=engine,if_exists='replace',index=False)
+    print("Finish writing table: ", outtable)
+
 
 class DatabaseWorker(Thread):
     __lock = Lock()
