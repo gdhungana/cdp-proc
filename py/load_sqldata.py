@@ -48,13 +48,13 @@ def write_data_table(df,server,dbname,outtable,uid,pwd,port=1433,driver='/usr/lo
     conn ="DRIVER="+driver+";SERVER="+server+";DATABASE="+dbname+";UID="+uid+";PWD="+pwd
     quoted = quote_plus(conn)
     new_con='mssql+pyodbc:///?odbc_connect={}'.format(quoted)
-    engine=sqlalchemy.create_engine(new_con)
+    engine=create_engine(new_con)
     print("writing table to the db")
     df.to_sql(outtable,con=engine,if_exists='replace',index=False)
     print("Finish writing table: ", outtable)
 
 
-class DatabaseWorker(Thread):
+class Databwrite_data_table(df,server,dbname,outtable,uid,pwdaseWorker(Thread):
     __lock = Lock()
 
     def __init__(self, db, query, result_queue):
