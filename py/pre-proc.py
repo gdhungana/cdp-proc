@@ -34,17 +34,86 @@ def comb_hhdata_org(cnxn,addgenre=False,addsec_no=False):
        orgmap=load_data(cnxn,sqlorgmap)
        print("TRGI sec_no given for ", len(set(orgmap['TRGI'].values)))
        trg_org=pd.merge(trg_org,orgmap,left_on='OrgID',right_on='TRGI', how='left')
-       trg_org.drop('TRGI',axis=1,inplace=True)    
-   print("Shape of final TRG ORG integ: ",trg_org.shape) 
+       trg_org.drop('TRGI',axis=1,inplace=True)
+   print("Shape of final TRG ORG integ: ",trg_org.shape)
    return trg_org
 
+def map_state_to_Code(revert=False):
+    states = {
+        'AK': 'Alaska',
+        'AL': 'Alabama',
+        'AR': 'Arkansas',
+        'AS': 'American Samoa',
+        'AZ': 'Arizona',
+        'CA': 'California',
+        'CO': 'Colorado',
+        'CT': 'Connecticut',
+        'DC': 'District of Columbia',
+        'DE': 'Delaware',
+        'FL': 'Florida',
+        'GA': 'Georgia',
+        'GU': 'Guam',
+        'HI': 'Hawaii',
+        'IA': 'Iowa',
+        'ID': 'Idaho',
+        'IL': 'Illinois',
+        'IN': 'Indiana',
+        'KS': 'Kansas',
+        'KY': 'Kentucky',
+        'LA': 'Louisiana',
+        'MA': 'Massachusetts',
+        'MD': 'Maryland',
+        'ME': 'Maine',
+        'MI': 'Michigan',
+        'MN': 'Minnesota',
+        'MO': 'Missouri',
+        'MP': 'Northern Mariana Islands',
+        'MS': 'Mississippi',
+        'MT': 'Montana',
+        'NA': 'National',
+        'NC': 'North Carolina',
+        'ND': 'North Dakota',
+        'NE': 'Nebraska',
+        'NH': 'New Hampshire',
+        'NJ': 'New Jersey',
+        'NM': 'New Mexico',
+        'NV': 'Nevada',
+        'NY': 'New York',
+        'OH': 'Ohio',
+        'OK': 'Oklahoma',
+        'OR': 'Oregon',
+        'PA': 'Pennsylvania',
+        'PR': 'Puerto Rico',
+        'RI': 'Rhode Island',
+        'SC': 'South Carolina',
+        'SD': 'South Dakota',
+        'TN': 'Tennessee',
+        'TX': 'Texas',
+        'UT': 'Utah',
+        'VA': 'Virginia',
+        'VI': 'Virgin Islands',
+        'VT': 'Vermont',
+        'WA': 'Washington',
+        'WI': 'Wisconsin',
+        'WV': 'West Virginia',
+        'WY': 'Wyoming'}
+    #- convert to upper
+    states={k: v.upper() for k, v in states.items()}
+    if revert:
+        states_revert={v: k for k, v in states.items()}
+        return states_revert
+    else:
+        return states
 
 def clean_household(cnxn):
-    sqlhh="select distinct HouseholdID,City,replace(State,'[^\W ]','') as state,PostalCode from Household_20200501 where State is not NULL"
+    sqlhh="select distinct HouseholdID,City,replace(State,'[^\W ]','') as State,PostalCode from Household_20200501"
     hhdf=load_data(cnxn,sqlhh)
     hhdf['State']==hhdf['State'].str.upper()
     print("Distinct hh:", len(set(hhdf['HouseholdID'].values)))
     #- Now map full State to State Code
+    states=map_state_to_Code(revert=True)
+    hhdf['State']=hhdf.replace({"State":states})
+    #- now update the fips
     sqlfips="select * from FipsstateMap"
     fips=load_data(cnxn,sqlfips)
     #- join fips
