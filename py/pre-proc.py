@@ -12,7 +12,7 @@ def clean_trg_map(trgmapfile):
         trgmap[col]=trgmap[col].str.strip()
     return trgmap #- write_data_table will write to the table
 
-def comb_hhdata_org(cnxn,addgenre=False):
+def comb_hhdata_org(cnxn,addgenre=False,addsec_no=False):
    sqltrg="select * from TRGMap"
    trgmap=load_data(cnxn,sqltrg)
    print("TRG MAP orgids: ", len(set(trgmap['OrgID'].values)))
@@ -24,18 +24,27 @@ def comb_hhdata_org(cnxn,addgenre=False):
    #- combining Orggenre 
    if addgenre:
        print("add Org Genre")
-       sqlGen="select distinct OrgID, first_value(Genre) over(partition by OrgId order by Genre ASC) as Genre from OrgGenre"
+       sqlGen="select distinct OrgID, first_value(Genre) over(partition by OrgId order by Genre ASC) as TRG_Genre from OrgGenre"
        orggen=load_data(cnxn,sqlGen)
        print("Genre available for Orgs: ", len(set(orggen['OrgID'].values)))
        trg_org=pd.merge(trg_org,orggen,left_on='OrgID',right_on='OrgID', how='left')
+   if addsec_no:
+       print("add sec_no from Orgmap")
+       sqlorgmap="select distinct cast(TRGI as int) as TRGI, sec_no from orgmap where TRGI is not NULL"
+       orgmap=load_data(cnxn,sqlorgmap)
+       print("TRGI sec_no given for ", len(set(orgmap['TRGI'].values)))
+       trg_org=pd.merge(trg_org,orgmap,left_on='OrgID',right_on='TRGI', how='left')
+       trg_org.drop('TRGI',axis=1,inplace=True)    
+   print("Shape of final TRG ORG integ: ",trg_org.shape) 
    return trg_org
-
 
 
 def clean_household(cnxn):
     sqlhh="select distinct HouseholdID,City,replace(State,'[^\W ]','') as state,PostalCode from Household_20200501 where State is not NULL"
     hhdf=load_data(cnxn,sqlhh)
+    hhdf['State']==hhdf['State'].str.upper()
     print("Distinct hh:", len(set(hhdf['HouseholdID'].values)))
+    #- Now map full State to State Code
     sqlfips="select * from FipsstateMap"
     fips=load_data(cnxn,sqlfips)
     #- join fips
@@ -43,7 +52,3 @@ def clean_household(cnxn):
     hhfips=pd.merge(hhdf,fips,left_on='state',right_on='state',how='left')
     print("Distinct hhfips hh:", len(set(hhfips['HouseholdID'].values)))
     
-
-    
-
-
