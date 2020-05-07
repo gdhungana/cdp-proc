@@ -12,7 +12,7 @@ def clean_trg_map(trgmapfile):
         trgmap[col]=trgmap[col].str.strip()
     return trgmap #- write_data_table will write to the table
 
-def comb_hhdata_org(cnxn):
+def comb_hhdata_org(cnxn,addgenre=False):
    sqltrg="select * from TRGMap"
    trgmap=load_data(cnxn,sqltrg)
    print("TRG MAP orgids: ", len(set(trgmap['OrgID'].values)))
@@ -22,13 +22,21 @@ def comb_hhdata_org(cnxn):
    trg_org=pd.merge(trgmap,organization,left_on='OrgID',right_on='OrgID',how='inner')
    print("trg_org orgids: ", len(set(trgmap['OrgID'].values)))
    #- combining Orggenre 
+   if addgenre:
+       print("add Org Genre")
+       sqlGen="select distinct OrgID, first_value(Genre) over(partition by OrgId order by Genre ASC) as Genre from OrgGenre"
+       orggen=load_data(cnxn,sqlGen)
+       print("Genre available for Orgs: ", len(set(orggen['OrgID'].values)))
+       trg_org=pd.merge(trg_org,orggen,left_on='OrgID',right_on='OrgID', how='left')
    return trg_org
 
+
+
 def clean_household(cnxn):
-    sqlhh="select distinct HouseholdID,City,replace(State,'[^\W ]','') as state,PostalCode from Household_20200501"
+    sqlhh="select distinct HouseholdID,City,replace(State,'[^\W ]','') as state,PostalCode from Household_20200501 where State is not NULL"
     hhdf=load_data(cnxn,sqlhh)
     print("Distinct hh:", len(set(hhdf['HouseholdID'].values)))
-    sqlfips="select * from fipsstatemap"
+    sqlfips="select * from FipsstateMap"
     fips=load_data(cnxn,sqlfips)
     #- join fips
     print("Joining hh with fipsstatecode")
