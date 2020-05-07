@@ -49,6 +49,11 @@ def write_data_table(df,server,dbname,outtable,uid,pwd,port=1433,driver='/usr/lo
     quoted = quote_plus(conn)
     new_con='mssql+pyodbc:///?odbc_connect={}'.format(quoted)
     engine=create_engine(new_con)
+    #- Execute many for data insert: https://medium.com/analytics-vidhya/speed-up-bulk-inserts-to-sql-db-using-pandas-and-python-61707ae41990
+    @event.listens_for(engine, "before_cursor_execute")
+    def receive_before_cursor_execute(conn, cursor, statement, params, context, executemany):
+        if executemany:
+            cursor.fast_executemany = True
     print("writing table to the db")
     df.to_sql(outtable,con=engine,if_exists='replace',index=False)
     print("Finish writing table: ", outtable)

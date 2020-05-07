@@ -113,6 +113,13 @@ def clean_household(cnxn):
     #- Now map full State to State Code
     states=map_state_to_Code(revert=True)
     hhdf['State']=hhdf.replace({"State":states})
+    #- Hardcoding these three Hoseholds to change state from OH to KY
+    """
+    38663830 21   21015     21015980100           Cincinnati OH 45275
+    49727069 21   21015     21015980100           Cincinnati OH 45275
+    52218051 21   21015     21015980100           Cincinnati OH 45275
+    """
+    hhdf.loc[hhdf['HouseholdID'] in [38663830,49727069,52218051], 'State'] = 'KY'
     #- now update the fips
     sqlfips="select * from FipsstateMap"
     fips=load_data(cnxn,sqlfips)
