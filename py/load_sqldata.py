@@ -34,6 +34,61 @@ def load_data(cnxn,sqlquery):
     cursor=cnxn.cursor()
     data=pd.read_sql(sqlquery,cursor.connection)
     return data
+
+def load_sql_hdf(engine, query, verbose=True, chunksize=1000000):
+    """ Return DataFrame from SELECT query and engine
+
+    Given a valid SQL SELECT query and a engine, return a Pandas 
+    DataFrame with the response data.
+
+    Args:
+        engine: db engine from sqlalchemy
+        query: Valid SQL, containing a SELECT query
+        verbose: prints chunk progress if True. Default False.
+        chunksize: Number of lines to read per chunk. Default 100000
+
+    Returns:
+        df: A Pandas DataFrame containing the response of query
+    ref: https://www.reddit.com/r/learnpython/comments/9f88cp/i_want_to_load_a_multi_million_row_sql_output/
+
+    """    
+    import tempfile
+    # get the data to temp chunk filese
+    i = 0
+    paths_chunks = []
+    with tempfile.TemporaryDirectory() as td:
+        for df in pd.read_sql_query(sql=query, con=engine, chunksize=chunksize):
+            path = td + "/chunk" + str(i) + ".hdf5"
+            df.to_hdf(path, key='data')
+            if verbose:
+                print("wrote", path)
+            paths_chunks.append(path)
+            i+=1
+
+        # Merge the chunks using concat, the most efficient way AFAIK
+        df = pd.DataFrame()
+        for path in paths_chunks:
+            df_scratch = pd.read_hdf(path)
+            df = pd.concat([df, df_scratch])
+            if verbose:
+                print("read", path)    
+    return df
+
+
+def read_sql_inmem_gzip_pandas_decompress(query, db_engine): #- faster load of data for postgreSQL 
+    copy_sql = "COPY ({query}) TO STDOUT WITH CSV {head}".format(
+       query=query, head="HEADER"
+    )
+    conn = db_engine.raw_connection()
+    cur = conn.cursor()
+    store = io.BytesIO()
+    with GzipFile(fileobj=store, mode='w') as out:
+        cur.copy_expert(copy_sql, out)
+    store.seek(0)
+    df = pandas.read_csv(store, compression='gzip')
+    return df
+
+
 """
 def write_data_rowwise(cnxn,df):
     cursor=cnxn.cursor()
