@@ -108,7 +108,7 @@ def write_data_rowwise(cnxn,df):
         cursor.execute....
 """
 
-def write_data_table(df,server,dbname,outtable,uid,pwd,port=1433,driver='/usr/local/lib/libmsodbcsql.17.dylib',chunksize=5000000): 
+def write_data_table(df,server,dbname,outtable,uid,pwd,port=1433,driver='/usr/local/lib/libmsodbcsql.17.dylib',chunksize=None): 
     from sqlalchemy import create_engine, event
     from urllib.parse import quote_plus
     conn ="DRIVER="+driver+";SERVER="+server+";DATABASE="+dbname+";UID="+uid+";PWD="+pwd
