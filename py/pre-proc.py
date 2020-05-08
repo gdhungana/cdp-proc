@@ -96,7 +96,11 @@ def map_state_to_Code(revert=False):
         'WA': 'Washington',
         'WI': 'Wisconsin',
         'WV': 'West Virginia',
-        'WY': 'Wyoming'}
+        'WY': 'Wyoming',
+        'GU': 'GUAM',
+        'AS': 'AMERICAN SAMOA',
+        'PR': 'PUERTO RICO',
+        'VI': 'VIRGIN ISLANDS'}
     #- convert to upper
     states={k: v.upper() for k, v in states.items()}
     if revert:
@@ -106,14 +110,14 @@ def map_state_to_Code(revert=False):
         return states
 
 def clean_household(cnxn):
-    sqlhh="select distinct HouseholdID,CountyCode,FTract,BlockGroup,City,replace(State,'[^\W ]','') as State,PostalCode from Household_20200501"
+    sqlhh="select distinct HouseholdID,CountyCode,FTract,BlockGroup,City,UPPER(replace(State,'[^\W ]','')) as State,PostalCode from Household_20200501"
     print("Query to get the hh data in progress....")
     hhdf=load_data(cnxn,sqlhh)
-    hhdf['State']=hhdf['State'].str.upper()
+    #hhdf['State']=hhdf['State'].str.upper() --Done above
     print("Distinct hh:", len(set(hhdf['HouseholdID'].values)))
     #- Now map full State to State Code
     states=map_state_to_Code(revert=True)
-    hhdf=hhdf.replace({"State":states})
+    hhdf=hhdf.replace({"State":states}) #- slow can refactor and later merge
     #- Hardcoding these three Hoseholds to change state from OH to KY
     """
     38663830 21   21015     21015980100           Cincinnati OH 45275
@@ -124,15 +128,12 @@ def clean_household(cnxn):
     hhdf.loc[hhdf['HouseholdID'].isin([38663830,49727069,52218051]),'State']='KY'
     print("After substitute: ", hhdf.loc[hhdf['HouseholdID'].isin([38663830,49727069,52218051])])
     #- now update the fips
-    sqlfips="select * from FipsstateMap"
+    sqlfips="select Fipsstatecode,State from FipsstateMap"
     fips=load_data(cnxn,sqlfips)
     #- join fips
     print("Joining hh with fipsstatecode")
-    hhfips=pd.merge(hhdf,fips,left_on='State',right_on='state',how='left')
+    hhfips=pd.merge(hhdf,fips,left_on='State',right_on='State',how='left')
     print("Distinct hhfips hh:", len(set(hhfips['HouseholdID'].values)))
-    hhfips.drop('state',axis=1,inplace=True)
+    #hhfips.drop('state',axis=1,inplace=True) #- Slow
     return hhfips
-
-
-
 

@@ -35,7 +35,7 @@ def load_data(cnxn,sqlquery):
     data=pd.read_sql(sqlquery,cursor.connection)
     return data
 
-def load_sql_hdf(engine, query, verbose=True, chunksize=1000000):
+def load_sql_format(engine, query, verbose=True, format='parquet',chunksize=10000000):
     """ Return DataFrame from SELECT query and engine
 
     Given a valid SQL SELECT query and a engine, return a Pandas 
@@ -45,6 +45,7 @@ def load_sql_hdf(engine, query, verbose=True, chunksize=1000000):
         engine: db engine from sqlalchemy
         query: Valid SQL, containing a SELECT query
         verbose: prints chunk progress if True. Default False.
+        format: hdf5, parquet, csv etc
         chunksize: Number of lines to read per chunk. Default 100000
 
     Returns:
@@ -58,8 +59,13 @@ def load_sql_hdf(engine, query, verbose=True, chunksize=1000000):
     paths_chunks = []
     with tempfile.TemporaryDirectory() as td:
         for df in pd.read_sql_query(sql=query, con=engine, chunksize=chunksize):
-            path = td + "/chunk" + str(i) + ".hdf5"
-            df.to_hdf(path, key='data')
+            path = td + "/chunk" + str(i) + "."+format
+            if format=='hdf5':
+                df.to_hdf(path, key='data')
+            elif format=='parquet':
+                df.to_parquet(path)
+            elif format=='csv':
+                df.to_csv(path,index=0)
             if verbose:
                 print("wrote", path)
             paths_chunks.append(path)
@@ -68,7 +74,12 @@ def load_sql_hdf(engine, query, verbose=True, chunksize=1000000):
         # Merge the chunks using concat, the most efficient way AFAIK
         df = pd.DataFrame()
         for path in paths_chunks:
-            df_scratch = pd.read_hdf(path)
+            if format=='hdf5':
+                df_scratch = pd.read_hdf(path)
+            elif format=='parquet':
+                df_scratch = pd.read_parquet(path)
+            elif format=='csv':
+                df_scratch = pd.read_csv(path)
             df = pd.concat([df, df_scratch])
             if verbose:
                 print("read", path)    
@@ -97,7 +108,7 @@ def write_data_rowwise(cnxn,df):
         cursor.execute....
 """
 
-def write_data_table(df,server,dbname,outtable,uid,pwd,port=1433,driver='/usr/local/lib/libmsodbcsql.17.dylib'): 
+def write_data_table(df,server,dbname,outtable,uid,pwd,port=1433,driver='/usr/local/lib/libmsodbcsql.17.dylib',chunksize=5000000): 
     from sqlalchemy import create_engine, event
     from urllib.parse import quote_plus
     conn ="DRIVER="+driver+";SERVER="+server+";DATABASE="+dbname+";UID="+uid+";PWD="+pwd
@@ -110,7 +121,7 @@ def write_data_table(df,server,dbname,outtable,uid,pwd,port=1433,driver='/usr/lo
         if executemany:
             cursor.fast_executemany = True
     print("writing table to the db")
-    df.to_sql(outtable,con=engine,if_exists='replace',index=False)
+    df.to_sql(outtable,con=engine,if_exists='replace',index=False,chunksize=chunksize)
     print("Finish writing table: ", outtable)
 
 
