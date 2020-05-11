@@ -165,4 +165,13 @@ def get_two_parallels(): #- replace the db names and query
     worker1.join()
     worker2.join()
 
-
+def connect_to_postgre(server,dbname,uid,pwd,port=5432):
+    import psycopg2
+    engine=psycopg2.connect(
+        database=dbname,
+        user=uid,
+        password=pwd,
+        host=server,
+        port=port
+    )
+    return engine
