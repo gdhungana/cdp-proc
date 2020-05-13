@@ -36,3 +36,13 @@ def map_to_dashOrgs(cdpids,dashOrgsfile,outfile=None):
         dashresid.to_csv(outfile,index=0)
     return dashresid
 
+def filter_incompletes_cdp(cdpxfile):
+    """
+    filter out incomplete data set from the cdpXXx file
+    """
+    olddata=pd.read_csv(cdpxfile,encoding='latin-1')
+    print("old data shape ", olddata.shape)
+    complete=olddata[~olddata['STATUS_CODE'].isin([1])] #- completed status, data can have null and missing status code
+    print("completed data shape ",complete.shape)
+    complete=complete.drop("STATUS_CODE",axis=1)
+    return complete
