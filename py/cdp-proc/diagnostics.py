@@ -46,3 +46,4 @@ def filter_incompletes_cdp(cdpxfile,outfile):
     print("completed data shape ",complete.shape)
     complete=complete.drop("STATUS_CODE",axis=1)
     complete.to_csv(outfile,index=0)
+
