@@ -49,4 +49,30 @@ def get_blk_educ(state,year,path):
     educ['BachPerc']=sum(educ[ii] for ii in educ_fields)/educ['POP25']
     return educ[['BlkGrp','POP25','BachPerc']]
 
+def get_blk_latin(state,year,path):
+    filename=state+'Latin'+year[2:]+'.csv'
+    latin=pd.read_csv(datapath+'/'+filename)
+    latin.drop(axis=0,index=0,inplace=True)
+    latin=latin[['BlkGrp','TOTPOP','NotLat','Latin']]
+    return latin
 
+def get_blk_race(state,year,path):
+    filename=state+'Race'+year[2:]+'.csv'
+    race=pd.read_csv(datapath+'/'+filename)
+    race.drop(axis=0,index=0,inplace=True)
+    race=race[['BlkGrp','TOTPOP','WHIT','BLCK','AMIND','ASIA','HAWA','OthRce']]
+    return race
+
+def get_blk_poverty(state,year,path):
+    filename=state+'Poverty'+year[2:]+'.csv'
+    poverty=pd.read_csv(datapath+'/'+filename)
+    poverty.drop(axis=0,index=0,inplace=True)
+    poverty=poverty[['BlkGrp','TotPop']]
+    return poverty
+
+def get_blk_medhhinc(state,year,path):
+    filename=state+'MedHHInc'+year[2:]+'.csv'
+    medhh=pd.read_csv(datapath+'/'+filename)
+    medhh.drop(axis=0,index=0,inplace=True)
+    medhh=medhh[['BlkGrp','MedHInc']]
+    return medhh
