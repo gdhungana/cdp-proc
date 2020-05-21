@@ -82,18 +82,30 @@ def get_blk_medhhinc(state,year,path):
     medhh=medhh[['BlkGrp','MedHInc']]
     return medhh
 
-get_track_data_acs(type='econ',state='01'):
-    if type not in ['demo','econ','educ','hshld']:
-        print("type: ", type, " not supported. Put a valid type")
+def get_state_map_census():
+    url_St='https://api.census.gov/data/2018/acs/acs5/profile?get=NAME&for=state:*' 
+    r=requests.get(url_St)
+    files=r.json()
+    df=pd.DataFrame(files[1:],columns=files[0])
+    return df
+
+get_track_data_acs(kind='econ',state='01',year='2018'):
+    if kind not in ['demo','econ','educ','hshld']:
+        print("kind: ", kind, " not supported. Put a valid type")
         sys.exit(0)
     else:
-        print("Getting the tract level data from acs for ", type, "for state:", state)
-    if type=='demo':
-        url='https://api.census.gov/data/2018/acs/acs5/profile?get=group(DP05)&for=tract:*&in=state:'+state+'&in=county:*'
+        print("Getting the tract level data from acs for ", kind, "for state:", state)
+    if kind=='demo':
+        url='https://api.census.gov/data/'+year+'/acs/acs5/profile?get=group(DP05)&for=tract:*&in=state:'+state+'&in=county:*'
+    elif kind=='econ':
+        url='https://api.census.gov/data/'+year+'/acs/acs5/profile?get=group(DP03)&for=tract:*&in=state:'+state+'&in=county:*'
+    elif kind=='educ':
+        url='https://api.census.gov/data/'+year+'/acs/acs5/subject?get=group(S1501)&for=tract:*&in=state:'+state+'&in=county:*'
+    elif kind=='hshld':
+        url='https://api.census.gov/data/'+year+'/acs/acs5/subject?get=group(S1101)&for=tract:*&in=state:'+state+'&in=county:*'
     r=requests.get(url)
     files=r.json()
     print("Total lists ", len(files))
     df=pd.DataFrame(files[1:],columns=files[0])
     return df
-
 
