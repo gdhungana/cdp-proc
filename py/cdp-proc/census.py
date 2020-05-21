@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import os, sys
+import requests
 
 def get_blk_commute(state,year,path):
     filename=state+'Commute'+year[2:]+'.csv'
@@ -19,23 +21,22 @@ def get_blk_econ(state,year,path):
     econ.drop(axis=0,index=0,inplace=True)
     econ=econ.reset_index()
     #- fields
-    LT40_fields=['LT10','LT15','LT20','LT25','LT30','LT35','LT40']
+    LT50_fields=['LT10','LT15','LT20','LT25','LT30','LT35','LT40','LT45','LT50']
     GT100_fields=['GT100','GT125','GT150','GT200']
     GT125_fields=['GT125','GT150','GT200']
-    MidCI_fields=['LT45','LT50','LT60','LT55','LT75','LT100']
-    MidCI2_fields=['LT45','LT50','LT55','LT60','LT75','LT100','LT125']
+    GT150_fields=['GT150','GT200']
     #- convert the fields to float before calculation
-    fulllist=list(set(LT40_fields+GT100_fields+GT125_fields+MidCI_fields+MidCI2_fields))
+    fulllist=list(set(LT50_fields+GT100_fields+GT125_fields+GT150_fields))
     print("Full list: ", fulllist)
     othfields=['BlkGrp','TotHse']
     econ=econ[fulllist+othfields].astype(int)
     #- Get the metrics
-    econ['LT40p']=sum(econ[ii] for ii in LT40_fields)/econ['TotHse']
+    econ['LT50p']=sum(econ[ii] for ii in LT50_fields)/econ['TotHse']
     econ['GT100p']=sum(econ[ii] for ii in GT100_fields)/econ['TotHse']
     econ['GT125p']=sum(econ[ii] for ii in GT125_fields)/econ['TotHse']
-    econ['MidCIsP']=sum(econ[ii] for ii in MidCI_fields)/econ['TotHse']
-    econ['MidCIsP2']=sum(econ[ii] for ii in MidCI2_fields)/econ['TotHse']
-    return econ[['BlkGrp','TotHse','LT40p','GT100p','GT125p','MidCIsP']]
+    econ['GT150p']=sum(econ[ii] for ii in GT150_fields)/econ['TotHse']
+    econ['GT200p']=econ['GT200']/econ['TotHse']
+    return econ[['BlkGrp','TotHse','LT50p','GT100p','GT125p','GT150p','GT200p']]
 
 def get_blk_educ(state,year,path):
     filename=state+'Educ'+year[2:]+'.csv'
@@ -67,8 +68,12 @@ def get_blk_poverty(state,year,path):
     filename=state+'Poverty'+year[2:]+'.csv'
     poverty=pd.read_csv(datapath+'/'+filename)
     poverty.drop(axis=0,index=0,inplace=True)
-    poverty=poverty[['BlkGrp','TotPop']]
-    return poverty
+    pov_fields=['LTPov0toHalf','LTPovHalfto1']
+    othfields=['BlkGrp','TotPop']
+    poverty=poverty[pov_fields+othfields].astype(int)
+    #- get the stat
+    PovPerc=sum(poverty[ii] for ii in pov_fields)/poverty['TotPop'] 
+    return poverty[['BlkGrp','TotPop','PovPerc']]
 
 def get_blk_medhhinc(state,year,path):
     filename=state+'MedHHInc'+year[2:]+'.csv'
@@ -76,3 +81,19 @@ def get_blk_medhhinc(state,year,path):
     medhh.drop(axis=0,index=0,inplace=True)
     medhh=medhh[['BlkGrp','MedHInc']]
     return medhh
+
+get_track_data_acs(type='econ',state='01'):
+    if type not in ['demo','econ','educ','hshld']:
+        print("type: ", type, " not supported. Put a valid type")
+        sys.exit(0)
+    else:
+        print("Getting the tract level data from acs for ", type, "for state:", state)
+    if type=='demo':
+        url='https://api.census.gov/data/2018/acs/acs5/profile?get=group(DP05)&for=tract:*&in=state:'+state+'&in=county:*'
+    r=requests.get(url)
+    files=r.json()
+    print("Total lists ", len(files))
+    df=pd.DataFrame(files[1:],columns=files[0])
+    return df
+
+
