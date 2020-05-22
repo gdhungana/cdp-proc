@@ -109,3 +109,15 @@ get_track_data_acs(kind='econ',state='01',year='2018'):
     df=pd.DataFrame(files[1:],columns=files[0])
     return df
 
+get_blkgrp_data_acs(kind='econ',state='01',county='001',year='2018'):
+    if kind not in ['econ','educ','medhhinc','latin','poverty','commute','race']:
+        print("kind: ", kind, " not supported. Put a valid type")
+        sys.exit(0)
+    if kind=='econ':
+        url='https://api.census.gov/data/'+year+'/acs/acs5?get=group(B19001)&for=block%20group:*&in=state:'+state+'&in=county:'+county
+    r=requests.get(url)
+    files=r.json()
+    print("Total lists ", len(files))
+    df=pd.DataFrame(files[1:],columns=files[0])
+    return df
+
