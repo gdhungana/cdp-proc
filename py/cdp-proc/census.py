@@ -82,9 +82,28 @@ def get_blk_medhhinc(state,year,path):
     medhh=medhh[['BlkGrp','MedHInc']]
     return medhh
 
+def load_acskey_fields(censustype='tract',kind='econ'):
+    if censustype=='tract':
+        datafile='TractDataDefinition.xls'
+        sheet='Tract'+kind
+    elif censustype='blkgrp':
+        datafile='BlockDataDefinition.xls'
+        sheet='Block'+kind
+    else:
+        print("censustype can be only tract or blkgrp")
+    keyDF=pd.read_excel(datafile,sheet=sheet)
+    return keyDF
+
 def get_state_map_census():
     url_St='https://api.census.gov/data/2018/acs/acs5/profile?get=NAME&for=state:*' 
     r=requests.get(url_St)
+    files=r.json()
+    df=pd.DataFrame(files[1:],columns=files[0])
+    return df
+
+def get_state_county_map_census(state):
+    url_cty='https://api.census.gov/data/2018/acs/acs5?get=NAME&for=county:*&in=state:'+state
+    r=requests.get(url_cty)
     files=r.json()
     df=pd.DataFrame(files[1:],columns=files[0])
     return df
@@ -113,8 +132,22 @@ get_blkgrp_data_acs(kind='econ',state='01',county='001',year='2018'):
     if kind not in ['econ','educ','medhhinc','latin','poverty','commute','race']:
         print("kind: ", kind, " not supported. Put a valid type")
         sys.exit(0)
+    else:
+        print("Getting the block group level data from acs for ", kind, "for state:", state, ", county: ", county)
     if kind=='econ':
         url='https://api.census.gov/data/'+year+'/acs/acs5?get=group(B19001)&for=block%20group:*&in=state:'+state+'&in=county:'+county
+    elif kind=='medhhinc':
+        url='https://api.census.gov/data/'+year+'/acs/acs5?get=group(B19013)&for=block%20group:*&in=state:'+state+'&in=county:'+county
+    elif kind=='educ':
+        url='https://api.census.gov/data/'+year+'/acs/acs5?get=group(B15003)&for=block%20group:*&in=state:'+state+'&in=county:'+county
+    elif kind=='latin':
+        url='https://api.census.gov/data/'+year+'/acs/acs5?get=group(B03003)&for=block%20group:*&in=state:'+state+'&in=county:'+county
+    elif kind=='poverty':
+        url='https://api.census.gov/data/'+year+'/acs/acs5?get=group(C17002)&for=block%20group:*&in=state:'+state+'&in=county:'+county
+    elif kind=='commute':
+        url='https://api.census.gov/data/'+year+'/acs/acs5?get=group(B08303)&for=block%20group:*&in=state:'+state+'&in=county:'+county
+    elif kind=='race':
+        url='https://api.census.gov/data/'+year+'/acs/acs5?get=group(B02001)&for=block%20group:*&in=state:'+state+'&in=county:'+county
     r=requests.get(url)
     files=r.json()
     print("Total lists ", len(files))
