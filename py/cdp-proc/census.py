@@ -82,16 +82,16 @@ def get_blk_medhhinc(state,year,path):
     medhh=medhh[['BlkGrp','MedHInc']]
     return medhh
 
-def load_acskey_fields(censustype='tract',kind='econ'):
+def load_acskey_fields(censustype='tract',kind='econ',datapath='../../data'):
     if censustype=='tract':
-        datafile='TractDataDefinition.xls'
+        datafile=datapath+'/'+'TractDataDefinition.xlsx'
         sheet='Tract'+kind
-    elif censustype='blkgrp':
-        datafile='BlockDataDefinition.xls'
-        sheet='Block'+kind
+    elif censustype=='blkgrp':
+        datafile=datapath+'/'+'BlockDataDefinition.xlsx'
+        sheet='BlkGrp'+kind
     else:
         print("censustype can be only tract or blkgrp")
-    keyDF=pd.read_excel(datafile,sheet=sheet)
+    keyDF=pd.read_excel(datafile,sheet_name=sheet)
     return keyDF
 
 def get_state_map_census():
@@ -108,7 +108,7 @@ def get_state_county_map_census(state):
     df=pd.DataFrame(files[1:],columns=files[0])
     return df
 
-get_track_data_acs(kind='econ',state='01',year='2018'):
+def get_tract_data_acs(kind='econ',state='01',year='2018'):
     if kind not in ['demo','econ','educ','hshld']:
         print("kind: ", kind, " not supported. Put a valid type")
         sys.exit(0)
@@ -128,7 +128,7 @@ get_track_data_acs(kind='econ',state='01',year='2018'):
     df=pd.DataFrame(files[1:],columns=files[0])
     return df
 
-get_blkgrp_data_acs(kind='econ',state='01',county='001',year='2018'):
+def get_blkgrp_data_acs(kind='econ',state='01',county='001',year='2018'):
     if kind not in ['econ','educ','medhhinc','latin','poverty','commute','race']:
         print("kind: ", kind, " not supported. Put a valid type")
         sys.exit(0)
