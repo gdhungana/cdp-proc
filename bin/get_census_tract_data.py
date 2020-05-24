@@ -37,7 +37,7 @@ def get_census_tract_data(kind,year,mapdatapath):
 def get_census_block_data(kind,year,mapdatapath,state=None):
     #- get statemap first
     if state is not None:
-        print("Running for only given state: ",st)
+        print("Running for only given state: ",state)
         states=[state]
     else:
         print("Getting the state map")
@@ -65,7 +65,15 @@ def get_census_block_data(kind,year,mapdatapath,state=None):
     #blockDF['TRACT']=blockDF['STATE']+blockDF['COUNTY']+blockDF['TRACT']
     blockDF['BlkGrp']=blockDF['STATE']+blockDF['COUNTY']+blockDF['TRACT']+blockDF['BlkGrp']
     blockDF['YEAR']=year
-    return blockDF
+    print("getting the final statistics")
+    outDF=get_blk_stats(blockDF,kind)
+    return outDF
+
+def get_blk_stats(df,kind):
+    fnstr='get_blk'+kind
+    method_to_call=(cn,fnstr)
+    outDF=method_to_call(df)
+    return outDF
 
 def main(args):
     if args.censuslevel=='tract':

@@ -3,24 +3,25 @@ import numpy as np
 import os, sys
 import requests
 
-def get_blk_commute(state,year,path):
-    filename=state+'Commute'+year[2:]+'.csv'
-    comm=pd.read_csv(datapath+'/'+filename)
-    comm.drop(axis=0,index=0,inplace=True)
-    comm=comm.reset_index()
+def get_blk_commute(commuteDF):
+    #filename=state+'Commute'+year[2:]+'.csv'
+    #comm=pd.read_csv(datapath+'/'+filename)
+    #comm.drop(axis=0,index=0,inplace=True)
+    #comm=comm.reset_index()
+    comm=commuteDF
     com_fields=[ii for ii in comm.columns.values if 'Commute' in ii and 'E' !=ii[-1] and 'N' not in ii[-1]]
     com_fields_i=[int(ii[7:]) for ii in com_fields]
-    othfields=['BlkGrp','CommuteN']
+    othfields=['BlkGrp','CommuteN','YEAR']
     comm2=comm[othfields+com_fields].astype(int)
     comm2['AvgCommute']=sum(comm2[com_fields[ii]]*com_fields_i[ii] for ii in np.arange(len(com_fields)))/comm2['CommuteN']
-    return comm2[['BlkGrp','CommuteN','AvgCommute']]
+    return comm2[['BlkGrp','YEAR','CommuteN','AvgCommute']]
 
-def get_blk_econ(blockDF):
+def get_blk_econ(econDF):
     #filename=state+'Econ'+year[2:]+'.csv'
     #econ=pd.read_csv(datapath+'/'+filename)
     #econ.drop(axis=0,index=0,inplace=True)
     #econ=econ.reset_index()
-    econ=blockDF
+    econ=econDF
     #- fields
     LT50_fields=['LT10','LT15','LT20','LT25','LT30','LT35','LT40','LT45','LT50']
     GT100_fields=['GT100','GT125','GT150','GT200']
@@ -37,50 +38,67 @@ def get_blk_econ(blockDF):
     econ['GT125p']=sum(econ[ii] for ii in GT125_fields)/econ['TotHse']
     econ['GT150p']=sum(econ[ii] for ii in GT150_fields)/econ['TotHse']
     econ['GT200p']=econ['GT200']/econ['TotHse']
-    return econ[['BlkGrp','YEAR','TotHse','LT50p','GT100p','GT125p','GT150p','GT200p']]
+    econ['TotHse_econ']=econ['TotHse']
+    return econ[['BlkGrp','YEAR','TotHse_econ','LT50p','GT100p','GT125p','GT150p','GT200p']]
 
-def get_blk_educ(state,year,path):
-    filename=state+'Educ'+year[2:]+'.csv'
-    educ=pd.read_csv(datapath+'/'+filename)
-    educ.drop(axis=0,index=0,inplace=True)
-    educ=educ.reset_index()
+def get_blk_educ(educDF):
+    #filename=state+'Educ'+year[2:]+'.csv'
+    #educ=pd.read_csv(datapath+'/'+filename)
+    #educ.drop(axis=0,index=0,inplace=True)
+    #educ=educ.reset_index()
+    educ=ecucDF
     educ_fields=['BACH','GRAD','PROF','PHD']
-    othfields=['BlkGrp','POP25']
+    grad_fields=['GRAD','PROF','PHD']
+    othfields=['BlkGrp','POP25','YEAR']
     educ=educ[educ_fields+othfields].astype(int)
     #- Get the stat.
-    educ['BachPerc']=sum(educ[ii] for ii in educ_fields)/educ['POP25']
-    return educ[['BlkGrp','POP25','BachPerc']]
+    educ['BachPlusp']=sum(educ[ii] for ii in educ_fields)/educ['POP25']
+    educ['GradPlusp']=sum(educ[ii] for ii in grad_fields)/educ['POP25']
+    educ['POP25_educ']=educ['POP25']
+    return educ[['BlkGrp','YEAR','POP25_educ','BachPlusp','GradPlusp']]
 
-def get_blk_latin(state,year,path):
-    filename=state+'Latin'+year[2:]+'.csv'
-    latin=pd.read_csv(datapath+'/'+filename)
-    latin.drop(axis=0,index=0,inplace=True)
-    latin=latin[['BlkGrp','TOTPOP','NotLat','Latin']]
+def get_blk_latin(latinDF):
+    #filename=state+'Latin'+year[2:]+'.csv'
+    #latin=pd.read_csv(datapath+'/'+filename)
+    #latin.drop(axis=0,index=0,inplace=True)
+    latin=latinDF
+    latin['TOTPOP_ethnicity']=latin[TOTPOP]
+    latin=latin[['BlkGrp','YEAR','TOTPOP_ethnicity','NotLat','Latin']]
     return latin
 
-def get_blk_race(state,year,path):
-    filename=state+'Race'+year[2:]+'.csv'
-    race=pd.read_csv(datapath+'/'+filename)
-    race.drop(axis=0,index=0,inplace=True)
-    race=race[['BlkGrp','TOTPOP','WHIT','BLCK','AMIND','ASIA','HAWA','OthRce']]
+def get_blk_race(raceDF):
+    #filename=state+'Race'+year[2:]+'.csv'
+    #race=pd.read_csv(datapath+'/'+filename)
+    #race.drop(axis=0,index=0,inplace=True)
+    race=raceDF
+    race['WHITP']=race['WHIT']/race['TOTPOP']
+    race['BLCKP']=race['BLCK']/race['TOTPOP']
+    race['AMINDP']=race['AMIND']/race['TOTPOP']
+    race['ASIAP']=race['ASIA']/race['TOTPOP']
+    race['HAWAP']=race['HAWA']/race['TOTPOP']
+    race['TOTPOP_race']=race['TOTPOP']
+    race=race[['BlkGrp','YEAR','TOTPOP_race','WHITP','BLCKP','AMINDP','ASIAP','HAWAP']]
     return race
 
-def get_blk_poverty(state,year,path):
-    filename=state+'Poverty'+year[2:]+'.csv'
-    poverty=pd.read_csv(datapath+'/'+filename)
-    poverty.drop(axis=0,index=0,inplace=True)
+def get_blk_poverty(povertyDF):
+    #filename=state+'Poverty'+year[2:]+'.csv'
+    #poverty=pd.read_csv(datapath+'/'+filename)
+    #poverty.drop(axis=0,index=0,inplace=True)
+    poverty=povertyDF
     pov_fields=['LTPov0toHalf','LTPovHalfto1']
-    othfields=['BlkGrp','TotPop']
+    othfields=['BlkGrp','TotPop','YEAR']
     poverty=poverty[pov_fields+othfields].astype(int)
     #- get the stat
-    PovPerc=sum(poverty[ii] for ii in pov_fields)/poverty['TotPop'] 
-    return poverty[['BlkGrp','TotPop','PovPerc']]
+    poverty['PovPerc']=sum(poverty[ii] for ii in pov_fields)/poverty['TotPop']
+    poverty['TOTPOP_poverty']=poverty['TotPop'] 
+    return poverty[['BlkGrp','YEAR','TOTPOP_poverty','PovPerc']]
 
-def get_blk_medhhinc(state,year,path):
-    filename=state+'MedHHInc'+year[2:]+'.csv'
-    medhh=pd.read_csv(datapath+'/'+filename)
-    medhh.drop(axis=0,index=0,inplace=True)
-    medhh=medhh[['BlkGrp','MedHInc']]
+def get_blk_medhhinc(medhhincDF):
+    #filename=state+'MedHHInc'+year[2:]+'.csv'
+    #medhh=pd.read_csv(datapath+'/'+filename)
+    #medhh.drop(axis=0,index=0,inplace=True)
+    medhh=medhhincDF
+    medhh=medhh[['BlkGrp','YEAR','MedHInc']]
     return medhh
 
 def load_acskey_fields(datapath,censustype='tract',kind='econ'):
@@ -154,4 +172,3 @@ def get_blkgrp_data_acs(kind='econ',state='01',county='001',year='2018'):
     print("Total lists ", len(files))
     df=pd.DataFrame(files[1:],columns=files[0])
     return df
-
