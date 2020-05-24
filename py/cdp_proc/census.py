@@ -15,11 +15,12 @@ def get_blk_commute(state,year,path):
     comm2['AvgCommute']=sum(comm2[com_fields[ii]]*com_fields_i[ii] for ii in np.arange(len(com_fields)))/comm2['CommuteN']
     return comm2[['BlkGrp','CommuteN','AvgCommute']]
 
-def get_blk_econ(state,year,path):
-    filename=state+'Econ'+year[2:]+'.csv'
-    econ=pd.read_csv(datapath+'/'+filename)
-    econ.drop(axis=0,index=0,inplace=True)
-    econ=econ.reset_index()
+def get_blk_econ(blockDF):
+    #filename=state+'Econ'+year[2:]+'.csv'
+    #econ=pd.read_csv(datapath+'/'+filename)
+    #econ.drop(axis=0,index=0,inplace=True)
+    #econ=econ.reset_index()
+    econ=blockDF
     #- fields
     LT50_fields=['LT10','LT15','LT20','LT25','LT30','LT35','LT40','LT45','LT50']
     GT100_fields=['GT100','GT125','GT150','GT200']
@@ -28,7 +29,7 @@ def get_blk_econ(state,year,path):
     #- convert the fields to float before calculation
     fulllist=list(set(LT50_fields+GT100_fields+GT125_fields+GT150_fields))
     print("Full list: ", fulllist)
-    othfields=['BlkGrp','TotHse']
+    othfields=['BlkGrp','TotHse','YEAR']
     econ=econ[fulllist+othfields].astype(int)
     #- Get the metrics
     econ['LT50p']=sum(econ[ii] for ii in LT50_fields)/econ['TotHse']
@@ -36,7 +37,7 @@ def get_blk_econ(state,year,path):
     econ['GT125p']=sum(econ[ii] for ii in GT125_fields)/econ['TotHse']
     econ['GT150p']=sum(econ[ii] for ii in GT150_fields)/econ['TotHse']
     econ['GT200p']=econ['GT200']/econ['TotHse']
-    return econ[['BlkGrp','TotHse','LT50p','GT100p','GT125p','GT150p','GT200p']]
+    return econ[['BlkGrp','YEAR','TotHse','LT50p','GT100p','GT125p','GT150p','GT200p']]
 
 def get_blk_educ(state,year,path):
     filename=state+'Educ'+year[2:]+'.csv'
@@ -82,7 +83,7 @@ def get_blk_medhhinc(state,year,path):
     medhh=medhh[['BlkGrp','MedHInc']]
     return medhh
 
-def load_acskey_fields(censustype='tract',kind='econ',datapath='../../data'):
+def load_acskey_fields(datapath,censustype='tract',kind='econ'):
     if censustype=='tract':
         datafile=datapath+'/'+'TractDataDefinition.xlsx'
         sheet='Tract'+kind
