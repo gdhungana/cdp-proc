@@ -38,8 +38,8 @@ def get_blk_econ(econDF):
     econ['GT125p']=sum(econ[ii] for ii in GT125_fields)/econ['TotHse']
     econ['GT150p']=sum(econ[ii] for ii in GT150_fields)/econ['TotHse']
     econ['GT200p']=econ['GT200']/econ['TotHse']
-    econ['TotHse_econ']=econ['TotHse']
-    return econ[['BlkGrp','YEAR','TotHse_econ','LT50p','GT100p','GT125p','GT150p','GT200p']]
+    #econ['TotHse_econ']=econ['TotHse']
+    return econ[['BlkGrp','YEAR','TotHse','LT50p','GT100p','GT125p','GT150p','GT200p']]
 
 def get_blk_educ(educDF):
     #filename=state+'Educ'+year[2:]+'.csv'
@@ -54,16 +54,16 @@ def get_blk_educ(educDF):
     #- Get the stat.
     educ['BachPlusp']=sum(educ[ii] for ii in educ_fields)/educ['POP25']
     educ['GradPlusp']=sum(educ[ii] for ii in grad_fields)/educ['POP25']
-    educ['POP25_educ']=educ['POP25']
-    return educ[['BlkGrp','YEAR','POP25_educ','BachPlusp','GradPlusp']]
+    #educ['POP25_educ']=educ['POP25']
+    return educ[['BlkGrp','YEAR','POP25','BachPlusp','GradPlusp']]
 
 def get_blk_latin(latinDF):
     #filename=state+'Latin'+year[2:]+'.csv'
     #latin=pd.read_csv(datapath+'/'+filename)
     #latin.drop(axis=0,index=0,inplace=True)
     latin=latinDF
-    latin['TOTPOP_ethnicity']=latin[TOTPOP]
-    latin=latin[['BlkGrp','YEAR','TOTPOP_ethnicity','NotLat','Latin']]
+    #latin['TOTPOP_ethnicity']=latin[TOTPOP]
+    latin=latin[['BlkGrp','YEAR','TOTPOP','NotLat','Latin']]
     return latin
 
 def get_blk_race(raceDF):
@@ -76,8 +76,8 @@ def get_blk_race(raceDF):
     race['AMINDP']=race['AMIND']/race['TOTPOP']
     race['ASIAP']=race['ASIA']/race['TOTPOP']
     race['HAWAP']=race['HAWA']/race['TOTPOP']
-    race['TOTPOP_race']=race['TOTPOP']
-    race=race[['BlkGrp','YEAR','TOTPOP_race','WHITP','BLCKP','AMINDP','ASIAP','HAWAP']]
+    #race['TOTPOP_race']=race['TOTPOP']
+    race=race[['BlkGrp','YEAR','TOTPOP','WHITP','BLCKP','AMINDP','ASIAP','HAWAP']]
     return race
 
 def get_blk_poverty(povertyDF):
@@ -90,8 +90,8 @@ def get_blk_poverty(povertyDF):
     poverty=poverty[pov_fields+othfields].astype(int)
     #- get the stat
     poverty['PovPerc']=sum(poverty[ii] for ii in pov_fields)/poverty['TotPop']
-    poverty['TOTPOP_poverty']=poverty['TotPop'] 
-    return poverty[['BlkGrp','YEAR','TOTPOP_poverty','PovPerc']]
+    #poverty['TOTPOP_poverty']=poverty['TotPop']
+    return poverty[['BlkGrp','YEAR','TOTPOP','PovPerc']]
 
 def get_blk_medhhinc(medhhincDF):
     #filename=state+'MedHHInc'+year[2:]+'.csv'
