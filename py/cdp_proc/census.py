@@ -1,7 +1,12 @@
 import pandas as pd
 import numpy as np
 import os, sys
-import requests
+import json,re,requests
+from requests.auth import HTTPBasicAuth
+
+api_key='4d8a6dba79ca5499c89e527beb348364e4ef9ecd'
+#auth = HTTPBasicAuth('apikey', api_key)
+params = dict(key=api_key)
 
 def get_blk_commute(commuteDF):
     #filename=state+'Commute'+year[2:]+'.csv'
@@ -21,7 +26,11 @@ def get_blk_econ(econDF):
     #econ=pd.read_csv(datapath+'/'+filename)
     #econ.drop(axis=0,index=0,inplace=True)
     #econ=econ.reset_index()
-    econ=econDF
+    #- check for none entries and remove them
+    noneDF=econDF[pd.isna(econDF['TotHse'])]
+    if noneDF.shape[0]>0:
+        print("Found None entries: ", noneDF.shape[0], "in states: ", set(noneDF['STATE'].values))
+    econ=econDF[~pd.isna(econDF['TotHse'])]
     #- fields
     LT50_fields=['LT10','LT15','LT20','LT25','LT30','LT35','LT40','LT45','LT50']
     GT100_fields=['GT100','GT125','GT150','GT200']
@@ -46,7 +55,11 @@ def get_blk_educ(educDF):
     #educ=pd.read_csv(datapath+'/'+filename)
     #educ.drop(axis=0,index=0,inplace=True)
     #educ=educ.reset_index()
-    educ=ecucDF
+    #- check for none entries and remove them
+    noneDF=educDF[pd.isna(educDF['POP25'])]
+    if noneDF.shape[0]>0:
+        print("Found None entries: ", noneDF.shape[0], "in states: ", set(noneDF['STATE'].values))
+    educ=educDF[~pd.isna(educDF['POP25'])]
     educ_fields=['BACH','GRAD','PROF','PHD']
     grad_fields=['GRAD','PROF','PHD']
     othfields=['BlkGrp','POP25','YEAR']
@@ -61,7 +74,11 @@ def get_blk_latin(latinDF):
     #filename=state+'Latin'+year[2:]+'.csv'
     #latin=pd.read_csv(datapath+'/'+filename)
     #latin.drop(axis=0,index=0,inplace=True)
-    latin=latinDF
+    #- check for none entries and remove them
+    noneDF=latinDF[pd.isna(latinDF['TOTPOP'])]
+    if noneDF.shape[0]>0:
+        print("Found None entries: ", noneDF.shape[0], "in states: ", set(noneDF['STATE'].values))
+    latin=latinDF[~pd.isna(latinDF['TOTPOP'])]
     #latin['TOTPOP_ethnicity']=latin[TOTPOP]
     latin=latin[['BlkGrp','YEAR','TOTPOP','NotLat','Latin']]
     return latin
@@ -70,7 +87,13 @@ def get_blk_race(raceDF):
     #filename=state+'Race'+year[2:]+'.csv'
     #race=pd.read_csv(datapath+'/'+filename)
     #race.drop(axis=0,index=0,inplace=True)
-    race=raceDF
+    #- check for none entries and remove them
+    noneDF=raceDF[pd.isna(raceDF['TOTPOP'])]
+    if noneDF.shape[0]>0:
+        print("Found None entries: ", noneDF.shape[0], "in states: ", set(noneDF['STATE'].values))
+    race=raceDF[~pd.isna(raceDF['TOTPOP'])]
+    racefields=['BlkGrp','YEAR','TOTPOP','WHIT','BLCK','AMIND','ASIA','HAWA']
+    race=race[racefields].astype(int)
     race['WHITP']=race['WHIT']/race['TOTPOP']
     race['BLCKP']=race['BLCK']/race['TOTPOP']
     race['AMINDP']=race['AMIND']/race['TOTPOP']
@@ -84,20 +107,28 @@ def get_blk_poverty(povertyDF):
     #filename=state+'Poverty'+year[2:]+'.csv'
     #poverty=pd.read_csv(datapath+'/'+filename)
     #poverty.drop(axis=0,index=0,inplace=True)
-    poverty=povertyDF
+    #- check for none entries and remove them
+    noneDF=povertyDF[pd.isna(povertyDF['TotPop'])]
+    if noneDF.shape[0]>0:
+        print("Found None entries: ", noneDF.shape[0], "in states: ", set(noneDF['STATE'].values))
+    poverty=povertyDF[~pd.isna(povertyDF['TotPop'])]
     pov_fields=['LTPov0toHalf','LTPovHalfto1']
     othfields=['BlkGrp','TotPop','YEAR']
     poverty=poverty[pov_fields+othfields].astype(int)
     #- get the stat
     poverty['PovPerc']=sum(poverty[ii] for ii in pov_fields)/poverty['TotPop']
     #poverty['TOTPOP_poverty']=poverty['TotPop']
-    return poverty[['BlkGrp','YEAR','TOTPOP','PovPerc']]
+    return poverty[['BlkGrp','YEAR','TotPop','PovPerc']]
 
 def get_blk_medhhinc(medhhincDF):
     #filename=state+'MedHHInc'+year[2:]+'.csv'
     #medhh=pd.read_csv(datapath+'/'+filename)
     #medhh.drop(axis=0,index=0,inplace=True)
-    medhh=medhhincDF
+    #- check for none entries and remove them
+    noneDF=medhhincDF[pd.isna(medhhincDF['MedHInc'])]
+    if noneDF.shape[0]>0:
+        print("Found None entries: ", noneDF.shape[0], "in states: ", set(noneDF['STATE'].values))
+    medhh=medhhincDF[~pd.isna(medhhincDF['MedHInc'])]
     medhh=medhh[['BlkGrp','YEAR','MedHInc']]
     return medhh
 
@@ -115,8 +146,11 @@ def load_acskey_fields(datapath,censustype='tract',kind='econ'):
 
 def get_state_map_census():
     url_St='https://api.census.gov/data/2018/acs/acs5/profile?get=NAME&for=state:*' 
-    r=requests.get(url_St)
+    r=requests.get(url_St,params=params)
     files=r.json()
+    #r_parsed = re.sub(r'^jsonp\d+\(|\)\s+$', '', r.text)
+    #print(r_parsed)
+    #files=json.loads(r_parsed)
     df=pd.DataFrame(files[1:],columns=files[0])
     return df
 
@@ -126,7 +160,7 @@ def get_state_county_map_census(state=None):
     else:
         print("Getting counties for all state")
         url_cty='https://api.census.gov/data/2018/acs/acs5?get=NAME&for=county:*'
-    r=requests.get(url_cty)
+    r=requests.get(url_cty,params=params)
     files=r.json()
     df=pd.DataFrame(files[1:],columns=files[0])
     return df
@@ -145,7 +179,7 @@ def get_tract_data_acs(kind='econ',state='01',year='2018'):
         url='https://api.census.gov/data/'+year+'/acs/acs5/subject?get=group(S1501)&for=tract:*&in=state:'+state+'&in=county:*'
     elif kind=='hshld':
         url='https://api.census.gov/data/'+year+'/acs/acs5/subject?get=group(S1101)&for=tract:*&in=state:'+state+'&in=county:*'
-    r=requests.get(url)
+    r=requests.get(url,params=params)
     files=r.json()
     print("Total lists ", len(files))
     df=pd.DataFrame(files[1:],columns=files[0])
@@ -171,7 +205,7 @@ def get_blkgrp_data_acs(kind='econ',state='01',county='001',year='2018'):
         url='https://api.census.gov/data/'+year+'/acs/acs5?get=group(B08303)&for=block%20group:*&in=state:'+state+'&in=county:'+county
     elif kind=='race':
         url='https://api.census.gov/data/'+year+'/acs/acs5?get=group(B02001)&for=block%20group:*&in=state:'+state+'&in=county:'+county
-    r=requests.get(url)
+    r=requests.get(url,params=params)
     files=r.json()
     print("Total lists ", len(files))
     df=pd.DataFrame(files[1:],columns=files[0])
