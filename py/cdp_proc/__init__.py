@@ -1,6 +1,6 @@
 
 """
-cpd-proc
+cpd_proc
 =========
 """
 

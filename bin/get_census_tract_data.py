@@ -52,12 +52,14 @@ def get_census_block_data(kind,year,mapdatapath,state=None):
     keyDF=cn.load_acskey_fields(mapdatapath,censustype='blkgrp',kind=kind)
     keylist=keyDF['ACSKey']
     colmap={keyDF['ACSKey'].values[i]: keyDF['Variable'].values[i] for i in range(keyDF.shape[0])}
+    #- get the countyDF for all states
+    ctyDF=cn.get_state_county_map_census()
     #- get the tract full df
     blockDF=pd.DataFrame()
     for st in states:
         #- get the county for this state:
         print("getting the counties for state ",st,": ", statemap[st])
-        countyDF=cn.get_state_county_map_census(st)
+        countyDF=ctyDF[ctyDF['state']==st]
         ctys=countyDF['county']
         print("Total number of counties: ", len(ctys))
         #- get the blockgroupd data for each counties
