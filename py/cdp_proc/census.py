@@ -13,7 +13,11 @@ def get_blk_commute(commuteDF):
     #comm=pd.read_csv(datapath+'/'+filename)
     #comm.drop(axis=0,index=0,inplace=True)
     #comm=comm.reset_index()
-    comm=commuteDF
+    #- check for none entries and remove them
+    noneDF=commuteDF[pd.isna(commuteDF['CommuteN'])]
+    if noneDF.shape[0]>0:
+        print("Found None entries: ", noneDF.shape[0], "in states: ", set(noneDF['STATE'].values))
+    comm=commuteDF[~pd.isna(commuteDF['CommuteN'])]
     com_fields=[ii for ii in comm.columns.values if 'Commute' in ii and 'E' !=ii[-1] and 'N' not in ii[-1]]
     com_fields_i=[int(ii[7:]) for ii in com_fields]
     othfields=['BlkGrp','CommuteN','YEAR']

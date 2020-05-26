@@ -108,7 +108,7 @@ def write_data_rowwise(cnxn,df):
         cursor.execute....
 """
 
-def write_data_table(df,server,dbname,outtable,uid,pwd,port=1433,driver='/usr/local/lib/libmsodbcsql.17.dylib',chunksize=None): 
+def write_data_table(df,server,dbname,outtable,uid,pwd,port=1433,driver='/usr/local/lib/libmsodbcsql.17.dylib',chunksize=None,replace=False): 
     from sqlalchemy import create_engine, event
     from urllib.parse import quote_plus
     conn ="DRIVER="+driver+";SERVER="+server+";DATABASE="+dbname+";UID="+uid+";PWD="+pwd
@@ -121,10 +121,13 @@ def write_data_table(df,server,dbname,outtable,uid,pwd,port=1433,driver='/usr/lo
         if executemany:
             cursor.fast_executemany = True
     print("writing table to the db")
-    df.to_sql(outtable,con=engine,if_exists='replace',index=False,chunksize=chunksize)
+    if replace:
+        df.to_sql(outtable,con=engine,if_exists='replace',index=False,chunksize=chunksize)
+    else:
+        df.to_sql(outtable,con=engine,if_exists='append',index=False,chunksize=chunksize)
     print("Finish writing table: ", outtable)
 
-
+"""
 class Databwrite_data_table(df,server,dbname,outtable,uid,pwdaseWorker(Thread):
     __lock = Lock()
 
@@ -164,6 +167,7 @@ def get_two_parallels(): #- replace the db names and query
     job_done = True
     worker1.join()
     worker2.join()
+"""
 
 def connect_to_postgre(server,dbname,uid,pwd,port=5432):
     import psycopg2

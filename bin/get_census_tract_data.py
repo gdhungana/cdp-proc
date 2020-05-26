@@ -104,6 +104,14 @@ def get_blk_stats(df,kind):
     outDF=method_to_call(df)
     return outDF
 
+def write_to_sqldb(df,outtable):
+    from cdp_proc.load_sqldata import write_data_table
+    server='129.119.63.219'
+    dbname='CensusDB'
+    uid='gdhungana'
+    pwd='hli8OzhtMf7jr3MVImmm'
+    write_data_table(df,server,dbname,outtable,uid,pwd)
+
 def main(args):
     if args.censuslevel=='tract':
         censusDF=get_census_tract_data(args.kind,args.year,args.mapdatapath)
@@ -112,8 +120,13 @@ def main(args):
     if args.outcsv:
         censusDF.to_csv(args.outcsv,index=False)
     elif args.outsql:
+        from cdp_proc.load_sqldata import write_data_table
         print("writing to output sql table")
-   
-
+        if args.censuslevel=='tract':
+            sqltable='Tract'+args.kind
+        elif args.censuslevel=='blkgrp':
+            sqltable='BlkGrp'+args.kind
+        write_to_sqldb(censusDF,sqltable)
+        print("finished writing census data: ", args.censuslevel,": ", args.kind," -- to --> ", sqltable)
 if __name__=='__main__':
     main(args)
