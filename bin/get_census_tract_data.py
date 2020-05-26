@@ -33,8 +33,26 @@ def get_census_tract_data(kind,year,mapdatapath):
     tractDF['TRACT']=tractDF['STATE']+tractDF['COUNTY']+tractDF['TRACT']
     tractDF['YEAR']=year
     return tractDF
-        
-        
+
+def get_census_tract_data_static(kind,datapath):
+    years=np.arange(2009,2019)
+    outDF=pd.DataFrame()
+    for year in years:
+        datafile=datapath+'/'+'Tract'+kind+str(year)[2:]+'.csv'
+        print("processing data for year ", year," using datafile: ",datafile)
+        dataDF=pd.read_csv(datafile,engine='python')
+        dataDF['YEAR']=year
+        outDF=outDF.append(dataDF)
+    #- Sync the columns
+    outDF=outDF.rename(columns={'Tract':'TRACT', 'tract':'TRACT'})
+    #- Add state from the map
+    stateDF=cn.get_state_map_census()
+    statemap={stateDF['state'].values[i]: stateDF['NAME'].values[i] for i in range(stateDF.shape[0])}
+#    outDF['STATE']=outDF['TRACT'].astype(str).str[:-9].astype(int).map("{:02}".format)
+#    outDF.replace({"STATE":statemap},inplace=True)
+    return outDF
+
+
 def get_census_block_data(kind,year,mapdatapath,state=None):
     #- get statemap first
     if state is not None:
