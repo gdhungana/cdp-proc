@@ -41,15 +41,24 @@ def get_census_tract_data_static(kind,datapath):
         datafile=datapath+'/'+'Tract'+kind+str(year)[2:]+'.csv'
         print("processing data for year ", year," using datafile: ",datafile)
         dataDF=pd.read_csv(datafile,engine='python')
+        if kind=='econ':
+            fields=['TRACT','POP16','LT50KP','GT100P','GT150P','GT200P']
+        elif kind=='demo':
+            fields=['TRACT','TOTPOP','WHIT','BLCK','AMIND','ASIA','HAWA','LATIN']
+        elif kind=='educ':
+            fileds=['TRACT','POP25','BACH','GRAD']
+        dataDF=dataDF[fields]
         dataDF['YEAR']=year
+        print("Data dimensionality", dataDF.shape)
         outDF=outDF.append(dataDF)
     #- Sync the columns
-    outDF=outDF.rename(columns={'Tract':'TRACT', 'tract':'TRACT'})
+    outDF=outDF.rename(columns={'Tract':'TRACT', 'tract':'TRACT','LT50KP': 'LT50P'})
     #- Add state from the map
     stateDF=cn.get_state_map_census()
     statemap={stateDF['state'].values[i]: stateDF['NAME'].values[i] for i in range(stateDF.shape[0])}
-#    outDF['STATE']=outDF['TRACT'].astype(str).str[:-9].astype(int).map("{:02}".format)
-#    outDF.replace({"STATE":statemap},inplace=True)
+    outDF['STATE']=outDF['TRACT'].astype(str).str[:-9].astype(int).map("{:02}".format)
+    outDF.replace({"STATE":statemap},inplace=True)
+    outDF.reset_index(inplace=True,drop=True)
     return outDF
 
 
@@ -96,6 +105,7 @@ def get_census_block_data(kind,year,mapdatapath,state=None):
     #- add statename from statemap
     outDF['STATE']=outDF['BlkGrp'].astype(str).str[:-10].astype(int).map("{:02}".format)
     outDF.replace({"STATE":statemap},inplace=True)
+    outDF.reset_index(inplace=True,drop=True)
     return outDF
 
 def get_blk_stats(df,kind):

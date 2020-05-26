@@ -194,7 +194,7 @@ def get_blkgrp_data_acs(kind='econ',state='01',county='001',year='2018'):
         print("kind: ", kind, " not supported. Put a valid type")
         sys.exit(0)
     else:
-        print("Getting the block group level data from acs for ", kind, "for state:", state, ", county: ", county)
+        print("Getting the block group level data from acs for ", kind, "for state:", state, ", county: ", county, ", year: ",year)
     if kind=='econ':
         url='https://api.census.gov/data/'+year+'/acs/acs5?get=group(B19001)&for=block%20group:*&in=state:'+state+'&in=county:'+county
     elif kind=='medhhinc':
