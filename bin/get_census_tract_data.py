@@ -5,12 +5,13 @@ from cdp_proc import census as cn
 import argparse
 parser=argparse.ArgumentParser()
 parser.add_argument("--censuslevel",required=True,help='the census level: tract or blkgrp')
-parser.add_argument("--mapdatapath",default='../data',help='map to data path')
+parser.add_argument("--mapdatapath",required=False,default='../data',help='map to data path, need for API')
 parser.add_argument("--kind", required=True,type=str, help='kind of information for the given census level')
-parser.add_argument("--year", required=True,type=str, help='year to process data for')
+parser.add_argument("--year", required=False,type=str, help='year to process data for, need for API')
 parser.add_argument("--state",default=None,type=str,help='state to run the block group export on')
 parser.add_argument("--outcsv", required=False, help='output csv if given')
 parser.add_argument("--outsql", action='store_true', help='switch to write to a sql, db table name hardcoded')
+parser.add_argument("--static_datapath", default='None',required=False, help='use static data files instead of API calls')
 args = parser.parse_args()
 
 def get_census_tract_data(kind,year,mapdatapath):
@@ -35,6 +36,9 @@ def get_census_tract_data(kind,year,mapdatapath):
     return tractDF
 
 def get_census_tract_data_static(kind,datapath):
+    if kind not in ['demo','econ','educ']:
+        print("kind not accepted for tract static data. use one from demo,econ or educ")
+        sys.exit(0)
     years=np.arange(2009,2019)
     outDF=pd.DataFrame()
     for year in years:
@@ -42,14 +46,18 @@ def get_census_tract_data_static(kind,datapath):
         print("processing data for year ", year," using datafile: ",datafile)
         dataDF=pd.read_csv(datafile,engine='python')
         if kind=='econ':
-            fields=['TRACT','POP16','LT50KP','GT100P','GT150P','GT200P']
+            fields=['TRACT','POP16','LT50KP','GT100P','GT150P','GT200P','POVPERC']
+            dataDF=dataDF[fields]
+            dataDF.rename(columns={'POVPERC':'PovPerc'},inplace=True)
         elif kind=='demo':
             fields=['TRACT','TOTPOP','WHIT','BLCK','AMIND','ASIA','HAWA','LATIN']
+            dataDF=dataDF[fields]
         elif kind=='educ':
-            fileds=['TRACT','POP25','BACH','GRAD']
-        dataDF=dataDF[fields]
-        dataDF['YEAR']=year
-        print("Data dimensionality", dataDF.shape)
+            fields=['TRACT','POP25','BACH','GRAD']
+            dataDF=dataDF[fields]
+            dataDF.rename(columns={'BACH': 'BACHP','BACHP':'BachPlusP','GRAD':'GRADP'},inplace=True)
+        dataDF['YEAR']=year-1 #- make consistent with to Census data as is
+        print("Done with year:", year-1,"; Data dimensionality", dataDF.shape)
         outDF=outDF.append(dataDF)
     #- Sync the columns
     outDF=outDF.rename(columns={'Tract':'TRACT', 'tract':'TRACT','LT50KP': 'LT50P'})
@@ -124,7 +132,11 @@ def write_to_sqldb(df,outtable):
 
 def main(args):
     if args.censuslevel=='tract':
-        censusDF=get_census_tract_data(args.kind,args.year,args.mapdatapath)
+        if args.static_datapath is not None:
+            print("Getting tract level data for all years")
+            censusDF=get_census_tract_data_static(args.kind,args.static_datapath)
+        else:
+            censusDF=get_census_tract_data(args.kind,args.year,args.mapdatapath)
     elif args.censuslevel=='blkgrp':
         censusDF=get_census_block_data(args.kind,args.year,args.mapdatapath,args.state)
     if args.outcsv:
