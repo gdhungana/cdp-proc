@@ -17,7 +17,7 @@ args = parser.parse_args()
 def get_census_tract_data(kind,year,mapdatapath):
     #- get statemap first
     print("Getting the state map")
-    stateDF=cn.get_state_map_census()
+    stateDF=cn.get_state_map_census(year)
     states=stateDF['state']
     #- get the keyMap df
     print("getting the key maps")
@@ -39,7 +39,7 @@ def get_census_tract_data_static(kind,datapath):
     if kind not in ['demo','econ','educ']:
         print("kind not accepted for tract static data. use one from demo,econ or educ")
         sys.exit(0)
-    years=np.arange(2009,2019)
+    years=np.arange(2009,2020)
     outDF=pd.DataFrame()
     for year in years:
         datafile=datapath+'/'+'Tract'+kind+str(year)[2:]+'.csv'
@@ -53,7 +53,7 @@ def get_census_tract_data_static(kind,datapath):
             fields=['TRACT','TOTPOP','WHIT','BLCK','AMIND','ASIA','HAWA','LATIN']
             dataDF=dataDF[fields]
         elif kind=='educ':
-            fields=['TRACT','POP25','BACH','GRAD']
+            fields=['TRACT','POP25','BACH','GRAD','BACHP']
             dataDF=dataDF[fields]
             dataDF.rename(columns={'BACH': 'BACHP','BACHP':'BachPlusP','GRAD':'GRADP'},inplace=True)
         dataDF['YEAR']=year-1 #- make consistent with to Census data as is
@@ -62,7 +62,7 @@ def get_census_tract_data_static(kind,datapath):
     #- Sync the columns
     outDF=outDF.rename(columns={'Tract':'TRACT', 'tract':'TRACT','LT50KP': 'LT50P'})
     #- Add state from the map
-    stateDF=cn.get_state_map_census()
+    stateDF=cn.get_state_map_census(year)
     statemap={stateDF['state'].values[i]: stateDF['NAME'].values[i] for i in range(stateDF.shape[0])}
     outDF['STATE']=outDF['TRACT'].astype(str).str[:-9].astype(int).map("{:02}".format)
     outDF.replace({"STATE":statemap},inplace=True)
@@ -77,10 +77,10 @@ def get_census_block_data(kind,year,mapdatapath,state=None):
         states=[state]
     else:
         print("Getting the state map")
-        stateDF=cn.get_state_map_census()
+        stateDF=cn.get_state_map_census(year)
         states=stateDF['state']
     #- get state name:
-    stateDF=cn.get_state_map_census()
+    stateDF=cn.get_state_map_census(year)
     statemap={stateDF['state'].values[i]: stateDF['NAME'].values[i] for i in range(stateDF.shape[0])}
     #- get the keyMap df
     print("getting the key maps")
@@ -88,7 +88,7 @@ def get_census_block_data(kind,year,mapdatapath,state=None):
     keylist=keyDF['ACSKey']
     colmap={keyDF['ACSKey'].values[i]: keyDF['Variable'].values[i] for i in range(keyDF.shape[0])}
     #- get the countyDF for all states
-    ctyDF=cn.get_state_county_map_census()
+    ctyDF=cn.get_state_county_map_census(year)
     #- get the tract full df
     blockDF=pd.DataFrame()
     for st in states:

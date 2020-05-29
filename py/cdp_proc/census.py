@@ -148,8 +148,8 @@ def load_acskey_fields(datapath,censustype='tract',kind='econ'):
     keyDF=pd.read_excel(datafile,sheet_name=sheet)
     return keyDF
 
-def get_state_map_census():
-    url_St='https://api.census.gov/data/2018/acs/acs5/profile?get=NAME&for=state:*' 
+def get_state_map_census(year):
+    url_St='https://api.census.gov/data/'+year+'/acs/acs5/profile?get=NAME&for=state:*' 
     r=requests.get(url_St,params=params)
     files=r.json()
     #r_parsed = re.sub(r'^jsonp\d+\(|\)\s+$', '', r.text)
@@ -158,12 +158,12 @@ def get_state_map_census():
     df=pd.DataFrame(files[1:],columns=files[0])
     return df
 
-def get_state_county_map_census(state=None):
+def get_state_county_map_census(year,state=None):
     if state is not None:
-        url_cty='https://api.census.gov/data/2018/acs/acs5?get=NAME&for=county:*&in=state:'+state
+        url_cty='https://api.census.gov/data/'+year+'/acs/acs5?get=NAME&for=county:*&in=state:'+state
     else:
         print("Getting counties for all state")
-        url_cty='https://api.census.gov/data/2018/acs/acs5?get=NAME&for=county:*'
+        url_cty='https://api.census.gov/data/'+year+'/acs/acs5?get=NAME&for=county:*'
     r=requests.get(url_cty,params=params)
     files=r.json()
     df=pd.DataFrame(files[1:],columns=files[0])
