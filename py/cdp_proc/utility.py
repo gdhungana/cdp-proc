@@ -6,6 +6,7 @@ def stats_combine(companyfile,datadeffile):
     company=pd.read_csv(companyfile,engine='python')
     print("Company shape: ", company.shape)
     comp_stats=company.describe()
+    nyear=len(set(company['year'].values))
     #- add missing ones
     des2 = company.isnull().sum().to_frame(name = 'missing count').T
     comb=pd.concat([comp_stats,des2],axis=0)
@@ -17,12 +18,17 @@ def stats_combine(companyfile,datadeffile):
     des_cat = companycat.isnull().sum().to_frame(name = 'missing count')
     des_cat['count'] = company.shape[0]-des_cat['missing count']
     comb2=pd.concat([comb,des_cat.T],axis=1).T
-    comb2['Counts annual avg']=comb2['count']/5
+    comb2['Counts annual avg']=comb2['count']/nyear
     #combine with the data def file 
     print("Finished stats for company. Reading the data def file")
     datadef=pd.read_excel(datadeffile)
     print("data def shape: ", datadef.shape)
-    datadef=datadef[['VarName','Variable description']]
+    if 'KeyPick' in datadef.columns:
+        datadef=datadef[['KeyPick','VarName','Variable description']]
+        datadef['KeyPick'].fillna(0,inplace=True)
+        datadef['KeyPick']=datadef['KeyPick'].astype(int)
+    else:
+        datadef=datadef[['VarName','Variable description']]
     comb2['VarName']=comb2.index
     print("Merging company with data definition")
     comb3=pd.merge(datadef,comb2,left_on='VarName',right_on='VarName',how='inner')
@@ -40,5 +46,15 @@ def stats_combine(companyfile,datadeffile):
     resdcDF2=pd.merge(resdcDF,datadef,left_on='VarName',right_on='VarName',how='inner')
     return comb3,rescdDF,resdcDF2
 
-
+def integrate_id_variables(companyfile,fieldfile):
+    print("Running on company file")
+    company=pd.read_csv(companyfile,engine='python')
+    idfields=['NCARID','EIN','cdpid','TRGI','ORGName','sec_no','sector','YRFOUND','tzip','CBSA','year']   
+    print("Company shape: ", company.shape)
+    fieldDF=pd.read_csv(fieldfile)
+    varfields=list(fieldDF['VarName'])
+    allfields=idfields+varfields
+    finalDF=company[allfields]
+    print("final DF shape ",finalDF.shape )
+    return finalDF
 
