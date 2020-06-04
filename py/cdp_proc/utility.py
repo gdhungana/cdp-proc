@@ -49,12 +49,13 @@ def stats_combine(companyfile,datadeffile):
 def integrate_id_variables(companyfile,fieldfile):
     print("Running on company file")
     company=pd.read_csv(companyfile,engine='python')
-    idfields=['NCARID','EIN','cdpid','TRGI','ORGName','sec_no','sector','YRFOUND','tzip','CBSA','year']   
+    idfields=['TRGI','year']
     print("Company shape: ", company.shape)
     fieldDF=pd.read_csv(fieldfile)
     varfields=list(fieldDF['VarName'])
     allfields=idfields+varfields
     finalDF=company[allfields]
+    finalDF=finalDF.rename(columns={'TRGI':'OrgID'})
     print("final DF shape ",finalDF.shape )
     return finalDF
 
