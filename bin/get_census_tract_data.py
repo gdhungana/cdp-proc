@@ -36,7 +36,7 @@ def get_census_tract_data(kind,year,mapdatapath):
     return tractDF
 
 def get_census_tract_data_static(kind,datapath):
-    if kind not in ['demo','econ','educ']:
+    if kind not in ['demo','econ','educ','hshld']:
         print("kind not accepted for tract static data. use one from demo,econ or educ")
         sys.exit(0)
     years=np.arange(2009,2020)
@@ -46,7 +46,7 @@ def get_census_tract_data_static(kind,datapath):
         print("processing data for year ", year," using datafile: ",datafile)
         dataDF=pd.read_csv(datafile,engine='python')
         if kind=='econ':
-            fields=['TRACT','POP16','LT50KP','GT100P','GT150P','GT200P','POVPERC']
+            fields=['TRACT','POP16','LT50KP','GT100P','GT150P','GT200P','MEDHINC','POVPERC']
             dataDF=dataDF[fields]
             dataDF.rename(columns={'POVPERC':'PovPerc'},inplace=True)
         elif kind=='demo':
@@ -56,13 +56,17 @@ def get_census_tract_data_static(kind,datapath):
             fields=['TRACT','POP25','BACH','GRAD','BACHP']
             dataDF=dataDF[fields]
             dataDF.rename(columns={'BACH': 'BACHP','BACHP':'BachPlusP','GRAD':'GRADP'},inplace=True)
+        elif kind=='hshld':
+            fields=['tract','MalHse','MalHseSze','MALKID18','FemHse','FemHseSze','FEMKID18','MarCoup','MarSze','MARKID18','HsHldSze','AvFamSze','NonFamHse','NonFamSze','SameSex','TotFam','TotHse']
+            dataDF=dataDF[fields]
+            dataDF.rename(columns={'tract': 'TRACT'})
         dataDF['YEAR']=year-1 #- make consistent with to Census data as is
         print("Done with year:", year-1,"; Data dimensionality", dataDF.shape)
         outDF=outDF.append(dataDF)
     #- Sync the columns
     outDF=outDF.rename(columns={'Tract':'TRACT', 'tract':'TRACT','LT50KP': 'LT50P'})
     #- Add state from the map
-    stateDF=cn.get_state_map_census(year)
+    stateDF=cn.get_state_map_census('2018') #- hard code the most recent year
     statemap={stateDF['state'].values[i]: stateDF['NAME'].values[i] for i in range(stateDF.shape[0])}
     outDF['STATE']=outDF['TRACT'].astype(str).str[:-9].astype(int).map("{:02}".format)
     outDF.replace({"STATE":statemap},inplace=True)
