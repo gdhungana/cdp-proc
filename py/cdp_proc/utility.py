@@ -60,22 +60,35 @@ def integrate_id_variables(companyfile,fieldfile):
     print("final DF shape ",finalDF.shape )
     return finalDF
 
-def get_count_mean_miss(cnxn,table):
+def get_count_mean_miss(cnxn,table, datadeffile=None):
     sqlquery='select * from '+table
+    print("getting the data from table: ",table)
     datadf=load_data(cnxn,sqlquery)
     stats=datadf.describe()
     nyear=len(set(datadf['YEAR'].values))
     #- add missing ones
+    print("adding the missing count column")
     des2 = datadf.isnull().sum().to_frame(name = 'missing count').T
     comb=pd.concat([stats,des2],axis=0)
     categ=list(set(datadf.columns.values)-set(stats.columns.values))
+    print('categ list: ', categ)
     comb.drop(categ,axis=1,inplace=True)
     #- get the description for categ
     datacat=datadf[categ]
     des_cat = datacat.isnull().sum().to_frame(name = 'missing count')
     des_cat['count'] = datadf.shape[0]-des_cat['missing count']
     comb2=pd.concat([comb,des_cat.T],axis=1).T
-    comb2['Counts annual avg']=comb2['count']/nyear
-    return comb2
-    #return comb2[['Mean','Counts annual avg','Count','missing count']]
-
+    comb2['count annual avg']=comb2['count']/nyear
+    comb2=comb2[['mean','count annual avg','count','missing count']]
+    comb2['count annual avg']=comb2['count annual avg'].astype(int)
+    comb2['missing count']=comb2['missing count'].astype(int)
+    comb2['count']=comb2['count'].astype(int)
+    if datadeffile is not None:
+        print("Finished stats for table. Reading the data def file")
+        datadef=pd.read_excel(datadeffile)
+        datadef=datadef[['VarName','Description']]
+        comb2['VarName']=comb2.index
+        comb3=pd.merge(datadef,comb2,left_on='VarName',right_on='VarName',how='inner')
+        return comb3
+    else:
+        return comb2
