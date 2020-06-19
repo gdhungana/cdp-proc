@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import numpy as np
 import pandas as pd
+import os,sys
 from cdp_proc import census as cn
 import argparse
 parser=argparse.ArgumentParser()
@@ -136,8 +137,8 @@ def write_to_sqldb(df,outtable):
     from cdp_proc.load_sqldata import write_data_table
     server='129.119.63.219'
     dbname='CensusDB'
-    uid='gdhungana'
-    pwd='hli8OzhtMf7jr3MVImmm'
+    uid=os.environ['HHUID']
+    pwd=os.environ['HHPWD']
     write_data_table(df,server,dbname,outtable,uid,pwd)
 
 def main(args):
