@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from cdp_proc.load_sqldata import load_data
 
 def stats_combine(companyfile,datadeffile):
     print("Running on company file")
@@ -58,4 +59,23 @@ def integrate_id_variables(companyfile,fieldfile):
     finalDF=finalDF.rename(columns={'TRGI':'OrgID'})
     print("final DF shape ",finalDF.shape )
     return finalDF
+
+def get_count_mean_miss(cnxn,table):
+    sqlquery='select * from '+table
+    datadf=load_data(cnxn,sqlquery)
+    stats=datadf.describe()
+    nyear=len(set(datadf['YEAR'].values))
+    #- add missing ones
+    des2 = datadf.isnull().sum().to_frame(name = 'missing count').T
+    comb=pd.concat([stats,des2],axis=0)
+    categ=list(set(datadf.columns.values)-set(stats.columns.values))
+    comb.drop(categ,axis=1,inplace=True)
+    #- get the description for categ
+    datacat=datadf[categ]
+    des_cat = datacat.isnull().sum().to_frame(name = 'missing count')
+    des_cat['count'] = datadf.shape[0]-des_cat['missing count']
+    comb2=pd.concat([comb,des_cat.T],axis=1).T
+    comb2['Counts annual avg']=comb2['count']/nyear
+    return comb2
+    #return comb2[['Mean','Counts annual avg','Count','missing count']]
 
