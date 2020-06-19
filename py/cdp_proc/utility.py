@@ -60,10 +60,12 @@ def integrate_id_variables(companyfile,fieldfile):
     print("final DF shape ",finalDF.shape )
     return finalDF
 
-def get_count_mean_miss(cnxn,table, datadeffile=None):
+def get_count_mean_miss(cnxn,table,numcollist=None,datadeffile=None):
     sqlquery='select * from '+table
     print("getting the data from table: ",table)
     datadf=load_data(cnxn,sqlquery)
+    if numcollist is not None: #- force the given list to numeric
+        datadf[numcollist] = datadf[numcollist].apply(pd.to_numeric, errors='coerce')
     stats=datadf.describe()
     nyear=len(set(datadf['YEAR'].values))
     #- add missing ones

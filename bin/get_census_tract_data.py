@@ -49,17 +49,23 @@ def get_census_tract_data_static(kind,datapath):
             fields=['TRACT','POP16','LT50KP','GT100P','GT150P','GT200P','MEDHINC','POVPERC']
             dataDF=dataDF[fields]
             dataDF.rename(columns={'POVPERC':'PovPerc'},inplace=True)
+            numcols=['LT50KP','GT100P','GT150P','GT200P','MEDHINC','PovPerc']
         elif kind=='demo':
             fields=['TRACT','TOTPOP','WHIT','BLCK','AMIND','ASIA','HAWA','LATIN']
             dataDF=dataDF[fields]
+            numcols=['TOTPOP','WHIT','BLCK','AMIND','ASIA','HAWA','LATIN']
         elif kind=='educ':
             fields=['TRACT','POP25','BACH','GRAD','BACHP']
             dataDF=dataDF[fields]
             dataDF.rename(columns={'BACH': 'BACHP','BACHP':'BachPlusP','GRAD':'GRADP'},inplace=True)
+            numcols=['POP25','BACHP','GRADP','BachPlusP']
         elif kind=='hshld':
             fields=['tract','MalHse','MalHseSze','MALKID18','FemHse','FemHseSze','FEMKID18','MarCoup','MarSze','MARKID18','HsHldSze','AvFamSze','NonFamHse','NonFamSze','SameSex','TotFam','TotHse']
             dataDF=dataDF[fields]
             dataDF.rename(columns={'tract': 'TRACT'})
+            numcols=['MalHse','MalHseSze','MALKID18','FemHse','FemHseSze','FEMKID18','MarCoup','MarSze','MARKID18','HsHldSze','AvFamSze','NonFamHse','NonFamSze','SameSex','TotFam','TotHse']
+        #- convert all numeric columns to float
+        dataDF[numcols] = dataDF[numcols].apply(pd.to_numeric, errors='coerce')
         dataDF['YEAR']=year-1 #- make consistent with to Census data as is
         print("Done with year:", year-1,"; Data dimensionality", dataDF.shape)
         outDF=outDF.append(dataDF)
